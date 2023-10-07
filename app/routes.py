@@ -19,11 +19,13 @@ def index():
 def analyze_comments():
     subreddit = request.args.get('subreddit')
     access_token = session.get('access_token')
+    expires_in = session.get('expires_in')
     
-    if not access_token:
-        access_token = get_access_token()
-        session['access_token'] = access_token
-    
+    if not access_token or (expires_in and pd.Timestamp.now().timestamp() > expires_in):
+        access_token, expires_in = get_access_token()
+        session['access_token'] = access_token    
+        session['expires_in'] = expires_in + pd.Timestamp.now().timestamp()
+
     comments = fetch_comments(subreddit, access_token=access_token)
     for comment in comments:
         polarity, classification = analyze_sentiment(comment['text'])

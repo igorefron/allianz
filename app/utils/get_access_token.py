@@ -11,5 +11,5 @@ def get_access_token():
     }
     headers = {'User-Agent': 'allianz-app'}
     
-    res = requests.post(token_url, auth=auth, data=data, headers=headers)    
-    return res.json().get('access_token')
+    res = requests.post(token_url, auth=auth, data=data, headers=headers)        
+    return res.json().get('access_token'), res.json().get('expires_in')

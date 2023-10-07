@@ -196,9 +196,11 @@
                         // Check the readyState
                         if (event.target.readyState === EventSource.CONNECTING) {
                             //console.log("EventSource is attempting to reconnect.");
+                            source.close();
                             return;
                         } else if (event.target.readyState === EventSource.CLOSED) {
                             //console.log("EventSource closed by the server or client.");
+                            source.close();
                             return;
                         }
 

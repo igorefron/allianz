@@ -63,7 +63,7 @@
     </header><!-- End Header -->
 
     <main id="main">
-
+        
         <!-- ======= About Section ======= -->
         <section id="about" class="about">
             <div class="container">
@@ -74,7 +74,7 @@
 
                 <div class="row">
                     <div class="col-12" data-aos="fade-right">
-                        <form action="/analyze_comments" method="get">
+                        <form id="analysis-form">
                             <div class="form-group">
                                 <input type="text" class="form-control" id="subreddit" name="subreddit"
                                     placeholder="Enter subreddit name">
@@ -85,8 +85,96 @@
                     </div>
                 </div>
 
+                <!-- Loader -->
+                <div id="loader" style="display:none;">
+                    <i class="bx bx-loader bx-spin  bx-md mt-4"></i>
+                </div>
+
+                <!-- Results Table -->
+                <div class="table-responsive">
+                    <table id="results-table" class="table mt-4" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Comment</th>
+                                <th scope="col">Polarity</th>
+                                <th scope="col">Classification</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body">
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </section><!-- End About Section -->
+
+        <!-- JavaScript for AJAX -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const form = document.getElementById("analysis-form");
+                const loader = document.getElementById("loader");
+                const resultsTable = document.getElementById("results-table");
+                const resultsBody = document.getElementById("results-body");
+
+                form.addEventListener("submit", function(event) {
+                    event.preventDefault();
+                    const subreddit = document.getElementById("subreddit").value;
+
+                    // Show loader
+                    loader.style.display = "block";
+
+                    // Make AJAX request
+                    fetch(`/analyze_comments?subreddit=${subreddit}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Hide loader
+                            loader.style.display = "none"
+
+                            // Show and populate results table
+                            var collapseChars = 30;
+                            resultsBody.innerHTML = data.map(comment => `
+                                <tr>
+                                    <td>${comment.id}</td>
+                                    <td>
+                                        <span class="short-text">${comment.text.substring(0, collapseChars)}</span>
+                                        <span class="full-text" style="display:none;">${comment.text}</span>
+                                        ${comment.text.length > collapseChars ? '<a href="#" class="more-link">More</a>' : ''}
+                                    </td>
+                                    <td>${comment.polarity}</td>
+                                    <td>${comment.classification}</td>
+                                </tr>
+                            `).join("");
+                            resultsTable.style.display = "block";
+
+                            // Add click event for 'More' links
+                            document.querySelectorAll('.more-link').forEach(link => {
+                                link.addEventListener('click', function(event) {
+                                    event.preventDefault();
+                                    const fullText = this.previousElementSibling;
+                                    const shortText = fullText.previousElementSibling;
+                                    if (fullText.style.display === "none") {
+                                        fullText.style.display = "inline";
+                                        shortText.style.display = "none";
+                                        this.textContent = "Less";
+                                    } else {
+                                        fullText.style.display = "none";
+                                        shortText.style.display = "inline";
+                                        this.textContent = "More";
+                                    }
+                                });
+                            });
+                        })
+                        .catch(error => {
+                            // Hide loader and show error
+                            loader.style.display = "none";
+                            alert("An error occurred: " + error);
+                        });                        
+
+                });
+            });
+        </script>
+
 
         <section id="skills2" class="skills d-none">
             <div class="container">

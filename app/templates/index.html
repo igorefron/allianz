@@ -107,6 +107,7 @@
                                 <th scope="col">Comment</th>
                                 <th scope="col">Polarity</th>
                                 <th scope="col">Classification</th>
+                                <th scope="col">Explanation</th>
                             </tr>
                         </thead>
                         <tbody id="results-body">
@@ -149,6 +150,11 @@
                                     </td>
                                     <td>${comment.polarity}</td>
                                     <td>${comment.classification}</td>
+                                    <td>
+                                        <span class="short-text">${comment.explanation.substring(0, collapseChars)}</span>
+                                        <span class="full-text" style="display:none;">${comment.explanation}</span>
+                                        ${comment.explanation.length > collapseChars ? '<a href="#" class="more-link">More</a>' : ''}
+                                    </td>                                    
                                 </tr>
                             `).join("");
                             resultsTable.style.display = "block";

@@ -28,8 +28,9 @@ def analyze_comments():
 
     comments = fetch_comments(subreddit, access_token=access_token)
     for comment in comments:
-        polarity, classification = analyze_sentiment(comment['text'])
+        polarity, classification, explanation = analyze_sentiment(comment['text'])
         comment['polarity'] = polarity
         comment['classification'] = classification
+        comment['explanation'] = explanation
     
     return jsonify(comments)

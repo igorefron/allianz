@@ -68,15 +68,23 @@
         <section id="about" class="about">
             <div class="container">
                 <div class="section-title">
-                    <h2>Subreddit Sentiment Analysis</h2>
-                    <p>Enter Subreddit for Sentiment Analysis:</p>
+                    <h2>Subreddit Sentiment Analysis</h2>  
+                    <p>Popular Subreddits:</p>
+                    <ul id="popular-subreddits" class="list-group list-group-horizontal mt-2">
+                        <li class="list-group-item"><a href="#" class="subreddit-link">funny</a></li>
+                        <li class="list-group-item"><a href="#" class="subreddit-link">gaming</a></li>
+                        <li class="list-group-item"><a href="#" class="subreddit-link">music</a></li>
+                        <li class="list-group-item"><a href="#" class="subreddit-link">movies</a></li>
+                        <li class="list-group-item"><a href="#" class="subreddit-link">science</a></li>
+                    </ul>
                 </div>
 
                 <div class="row">
                     <div class="col-12" data-aos="fade-right">
-                        <form id="analysis-form">
+                        <form id="analysis-form">                            
                             <div class="form-group">
-                                <input type="text" class="form-control" id="subreddit" name="subreddit"
+                                <label for="subreddit">Enter Subreddit for Sentiment Analysis:</label>
+                                <input type="text" class="form-control mt-2" id="subreddit" name="subreddit"
                                     placeholder="Enter subreddit name">
                             </div>
 
@@ -116,14 +124,12 @@
                 const loader = document.getElementById("loader");
                 const resultsTable = document.getElementById("results-table");
                 const resultsBody = document.getElementById("results-body");
-
-                form.addEventListener("submit", function(event) {
-                    event.preventDefault();
-                    const subreddit = document.getElementById("subreddit").value;
-
+                
+                // Function to perform sentiment analysis
+                function performAnalysis(subreddit) {
                     // Show loader
                     loader.style.display = "block";
-
+                    
                     // Make AJAX request
                     fetch(`/analyze_comments?subreddit=${subreddit}`)
                         .then(response => response.json())
@@ -169,9 +175,26 @@
                             // Hide loader and show error
                             loader.style.display = "none";
                             alert("An error occurred: " + error);
-                        });                        
+                        }); 
+                }
 
+                // Event listener for form submission
+                form.addEventListener("submit", function(event) {
+                    event.preventDefault();
+                    const subreddit = document.getElementById("subreddit").value;
+                    performAnalysis(subreddit);
                 });
+
+                // Event listeners for popular subreddit links
+                document.querySelectorAll('.subreddit-link').forEach(link => {
+                    link.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        const subreddit = this.textContent;
+                        document.getElementById("subreddit").value = subreddit;
+                        performAnalysis(subreddit);
+                    });
+                });                        
+
             });
         </script>
 

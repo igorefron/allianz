@@ -81,6 +81,8 @@
 
                 <div class="row">
                     <div class="col-12" data-aos="fade-right">
+                        <div id="error-message"  class="alert alert-secondary" style="display: none" role="alert"></div>                
+                        
                         <form id="analysis-form">                            
                             <div class="form-group">
                                 <label for="subreddit">Enter Subreddit for Sentiment Analysis:</label>
@@ -96,7 +98,7 @@
                 <!-- Loader -->
                 <div id="loader" style="display:none;">
                     <i class="bx bx-loader bx-spin  bx-md mt-4"></i>
-                </div>
+                </div>                
 
                 <!-- Results Table -->
                 <div class="table-responsive">
@@ -119,70 +121,97 @@
         </section><!-- End About Section -->
 
         <!-- JavaScript for AJAX -->
-        <script>
+        <script>            
             document.addEventListener("DOMContentLoaded", function() {
                 const form = document.getElementById("analysis-form");
                 const loader = document.getElementById("loader");
                 const resultsTable = document.getElementById("results-table");
                 const resultsBody = document.getElementById("results-body");
+                const errorMessageElement = document.getElementById("error-message");
                 
                 // Function to perform sentiment analysis
                 function performAnalysis(subreddit) {
                     // Show loader
                     loader.style.display = "block";
-                    
-                    // Make AJAX request
-                    fetch(`/analyze_comments?subreddit=${subreddit}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            // Hide loader
-                            loader.style.display = "none"
+                    errorMessageElement.style.display = "none";
 
-                            // Show and populate results table
-                            var collapseChars = 30;
-                            resultsBody.innerHTML = data.map(comment => `
-                                <tr>
-                                    <td>${comment.id}</td>
-                                    <td>
-                                        <span class="short-text">${comment.text.substring(0, collapseChars)}</span>
-                                        <span class="full-text" style="display:none;">${comment.text}</span>
-                                        ${comment.text.length > collapseChars ? '<a href="#" class="more-link">More</a>' : ''}
-                                    </td>
-                                    <td>${comment.polarity}</td>
-                                    <td>${comment.classification}</td>
-                                    <td>
-                                        <span class="short-text">${comment.explanation.substring(0, collapseChars)}</span>
-                                        <span class="full-text" style="display:none;">${comment.explanation}</span>
-                                        ${comment.explanation.length > collapseChars ? '<a href="#" class="more-link">More</a>' : ''}
-                                    </td>                                    
-                                </tr>
-                            `).join("");
-                            resultsTable.style.display = "block";
+                    // Clear the table
+                    resultsBody.innerHTML = "";                    
 
-                            // Add click event for 'More' links
-                            document.querySelectorAll('.more-link').forEach(link => {
-                                link.addEventListener('click', function(event) {
-                                    event.preventDefault();
-                                    const fullText = this.previousElementSibling;
-                                    const shortText = fullText.previousElementSibling;
-                                    if (fullText.style.display === "none") {
-                                        fullText.style.display = "inline";
-                                        shortText.style.display = "none";
-                                        this.textContent = "Less";
-                                    } else {
-                                        fullText.style.display = "none";
-                                        shortText.style.display = "inline";
-                                        this.textContent = "More";
-                                    }
-                                });
+                    // Create an EventSource to connect to the server
+                    const source = new EventSource(`/analyze_comments?subreddit=${subreddit}`);
+
+                    source.onmessage = function(event) {
+                        const comment = JSON.parse(event.data);
+                        const collapseChars = 30;
+
+                        // Create a new row for the comment
+                        const newRow = `
+                            <tr>
+                                <td>${comment.id}</td>
+                                <td>
+                                    <span class="short-text">${comment.text.substring(0, collapseChars)}</span>
+                                    <span class="full-text" style="display:none;">${comment.text}</span>
+                                    ${comment.text.length > collapseChars ? '<a href="#" class="more-link">More</a>' : ''}
+                                </td>
+                                <td>${comment.polarity}</td>
+                                <td>${comment.classification}</td>
+                                <td>
+                                    <span class="short-text">${comment.explanation.substring(0, collapseChars)}</span>
+                                    <span class="full-text" style="display:none;">${comment.explanation}</span>
+                                    ${comment.explanation.length > collapseChars ? '<a href="#" class="more-link">More</a>' : ''}
+                                </td>
+                            </tr>
+                        `;
+
+                        // Append the new row to the existing table
+                        resultsBody.innerHTML += newRow;
+
+                        // Show the table
+                        resultsTable.style.display = "block";
+
+                        // Add click event for 'More' links for the new row
+                        document.querySelectorAll('.more-link').forEach(link => {
+                            link.addEventListener('click', function(event) {
+                                event.preventDefault();
+                                const fullText = this.previousElementSibling;
+                                const shortText = fullText.previousElementSibling;
+                                if (fullText.style.display === "none") {
+                                    fullText.style.display = "inline";
+                                    shortText.style.display = "none";
+                                    this.textContent = "Less";
+                                } else {
+                                    fullText.style.display = "none";
+                                    shortText.style.display = "inline";
+                                    this.textContent = "More";
+                                }
                             });
-                        })
-                        .catch(error => {
-                            // Hide loader and show error
-                            loader.style.display = "none";
-                            alert("An error occurred: " + error);
-                        }); 
+                        });
+                    };
+
+                    source.onerror = function(event) {                        
+                        // Hide loader
+                        loader.style.display = "none";
+
+                        // Check the readyState
+                        if (event.target.readyState === EventSource.CONNECTING) {
+                            //console.log("EventSource is attempting to reconnect.");
+                            return;
+                        } else if (event.target.readyState === EventSource.CLOSED) {
+                            //console.log("EventSource closed by the server or client.");
+                            return;
+                        }
+
+                        // If the event object has a 'message' property, display that, otherwise show a generic error
+                        const errorMessage = event.message || "An unknown error occurred";                        
+                        errorMessageElement.textContent = "An error occurred: " + errorMessage;
+                        errorMessageElement.style.display = "block";
+
+                        // Close the EventSource
+                        source.close();
+                    };
                 }
+
 
                 // Event listener for form submission
                 form.addEventListener("submit", function(event) {
@@ -219,8 +248,7 @@
                     <h2>Resume</h2>
                     <p>
                         since my youth i have been intersted in programming.<br>
-                        As i was studying at the University of Applied Sciences, in the distant 2006,<span
-                            class="d-none d-md-block"><br></span> the deepening and strengthening of the acquired
+                        As i was studying at the University of Applied Sciences, in the distant 2006,<br/> the deepening and strengthening of the acquired
                         knowledge in concrete subject areas began.<br>
                         By now i have accumulated over <b>15 years</b> of software development experience.<br> <br>
                         My areas of <b>expertise</b> include:

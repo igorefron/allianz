@@ -1,12 +1,11 @@
 import openai
 import json
-import base64
+import os
 from textblob import TextBlob
-
-openai.api_key = base64.b64decode('c2stNktnUXRxRWhIa1dBdkdKeUFTMzFUM0JsYmtGSlRQOWp5d0RVMHUyRWRZa3E1TkhQ'.encode()).decode()
 
 def analyze_sentiment(comment):
     try:
+        openai.api_key = os.environ.get('API_KEY') 
         prompt_text = f'''make a sentiment analysis on following comment:
         "{comment}"
 

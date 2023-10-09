@@ -10,12 +10,12 @@ logging.basicConfig(level=logging.INFO)
 # Constants
 TOKEN_URL = "https://www.reddit.com/api/v1/access_token"
 
-# Load sensitive information from environment variables
-CLIENT_ID = "mC4mwlVRXLQCI6Jn982LFA"
-CLIENT_SECRET = os.environ.get('API_SECRET')
-
 def get_access_token() -> Tuple[Optional[str], Optional[int]]:
     try:
+        # Load sensitive information from environment variables
+        CLIENT_ID = "mC4mwlVRXLQCI6Jn982LFA"        
+        CLIENT_SECRET = os.environ.get('API_SECRET')
+
         auth = HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
         data = {
             'grant_type': 'client_credentials'

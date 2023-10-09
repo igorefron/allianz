@@ -1,11 +1,16 @@
+from typing import Tuple
 import openai
 import json
 import os
+import logging
 from textblob import TextBlob
 
-def analyze_sentiment(comment):
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+
+def analyze_sentiment(comment: str) -> Tuple[float, str, str]:
     try:
-        openai.api_key = os.environ.get('API_KEY') 
+        openai.api_key = os.environ.get('API_KEY')
         prompt_text = f'''make a sentiment analysis on following comment:
         "{comment}"
 
@@ -16,12 +21,12 @@ def analyze_sentiment(comment):
         '''
         completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "assistant", "content": prompt_text}])
         content = completion.choices[0].message.content
-        # Parse content to extract polarity_score, sentiment, and explanation
-        # Assuming the content is a JSON string
-        result = json.loads(content)
+        if not content.endswith('}'):
+            content += '}'        
+        result = json.loads(content)        
         return result['polarity_score'], result['sentiment'].lower(), result['explanation']
     except Exception as e:
-        # Fallback to TextBlob
+        logging.warning(f"Falling back to TextBlob due to an error: {str(e)}")
         analysis = TextBlob(comment)
         polarity = analysis.sentiment.polarity
         classification = "positive" if polarity > 0 else "negative"

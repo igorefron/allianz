@@ -1,36 +1,24 @@
-import json
 import unittest
-from flask import Flask
-from myproject.app import app
+from app import create_app  # Replace with how you import your Flask app
+import json
 
-class RoutesTestCase(unittest.TestCase):
-    def setUp(self):
-        self.app = app
+class TestRoutes(unittest.TestCase):
+
+    def setUp(self):        
+        self.app = create_app()
         self.client = self.app.test_client()
 
-    def test_predict_next_placement(self):
-        # Use a dictionary to store your input data
-        input_data = {"input": [1, 2, 3, 4]}
-        
-        # Use test client to send a POST request to the route
-        response = self.client.post('/predict_next_placement', 
-                                    data=json.dumps(input_data),
-                                    content_type='application/json')
-        
-        # Check that the status code of the response is 200 (HTTP OK)
+    def test_index(self):
+        response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Subreddit Sentiment Analysis', response.data)  # Replace with actual text you expect
 
-    def test_predict_container_template(self):
-        # Use a dictionary to store your input data
-        input_data = {"input": [1, 2, 3, 4]}
-        
-        # Use test client to send a POST request to the route
-        response = self.client.post('/predict_container_template', 
-                                    data=json.dumps(input_data),
-                                    content_type='application/json')
-        
-        # Check that the status code of the response is 200 (HTTP OK)
+    def test_analyze_comments(self):
+        response = self.client.get('/analyze_comments?subreddit=science')
         self.assertEqual(response.status_code, 200)
+        # Add more assertions based on what you expect the output to be
 
-if __name__ == "__main__":
+    # Add more test methods as needed
+
+if __name__ == '__main__':
     unittest.main()
